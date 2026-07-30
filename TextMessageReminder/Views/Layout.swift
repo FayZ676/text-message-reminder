@@ -16,6 +16,9 @@ enum Layout {
     /// A grouped list row's horizontal content inset, matching UIKit.
     static let gutter: CGFloat = 16
 
+    /// A contact avatar, sized like the ones in Messages' conversation list.
+    static let avatarDiameter: CGFloat = 40
+
     /// `TextEditor` draws its text 5pt inside its own bounds. Subtracting that
     /// from the row's insets lines the message up with every other row in the
     /// form instead of sitting 5pt proud of them.

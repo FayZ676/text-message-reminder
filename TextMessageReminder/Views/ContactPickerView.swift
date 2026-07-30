@@ -4,6 +4,10 @@ import SwiftUI
 struct ContactSelection: Equatable {
     let name: String
     let handle: String
+
+    /// The address book's own id, so a photo can be fetched separately. The
+    /// picker's `CNContact` is partially fetched and can't carry one itself.
+    let identifier: String
 }
 
 struct ContactPickerView: UIViewControllerRepresentable {
@@ -59,7 +63,11 @@ struct ContactPickerView: UIViewControllerRepresentable {
             }
 
             guard !handle.isEmpty else { return }
-            complete(with: ContactSelection(name: name, handle: handle))
+            complete(with: ContactSelection(
+                name: name,
+                handle: handle,
+                identifier: contactProperty.contact.identifier
+            ))
         }
 
         func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
@@ -70,7 +78,11 @@ struct ContactPickerView: UIViewControllerRepresentable {
                 ?? ""
 
             guard !handle.isEmpty else { return }
-            complete(with: ContactSelection(name: name, handle: handle))
+            complete(with: ContactSelection(
+                name: name,
+                handle: handle,
+                identifier: contact.identifier
+            ))
         }
 
         func contactPickerDidCancel(_ picker: CNContactPickerViewController) {

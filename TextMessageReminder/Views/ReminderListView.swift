@@ -199,6 +199,29 @@ private struct ReminderRow: View {
     }
 
     var body: some View {
+        HStack(alignment: .top, spacing: Layout.regular) {
+            ContactAvatar(
+                name: reminder.contactName,
+                handle: reminder.contactHandle,
+                imageData: reminder.contactImageData
+            )
+
+            content
+        }
+        .opacity(reminder.isEnabled ? 1 : 0.5)
+        // Left alone the separator tucks under the row's deepest last subview,
+        // which is the compose button. Pinning it to the text column gives the
+        // avatar the same overhang Messages has.
+        .alignmentGuide(.listRowSeparatorLeading) { _ in Layout.avatarDiameter + Layout.regular }
+        .listRowInsets(EdgeInsets(
+            top: Layout.regular,
+            leading: Layout.gutter,
+            bottom: Layout.regular,
+            trailing: Layout.gutter
+        ))
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: Layout.snug) {
             VStack(alignment: .leading, spacing: Layout.tight) {
                 Text(reminder.effectiveTitle)
@@ -234,15 +257,5 @@ private struct ReminderRow: View {
                 .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
             }
         }
-        .opacity(reminder.isEnabled ? 1 : 0.5)
-        // Without this the separator starts at the compose button, since that's the
-        // leading edge of the row's last subview.
-        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-        .listRowInsets(EdgeInsets(
-            top: Layout.regular,
-            leading: Layout.gutter,
-            bottom: Layout.regular,
-            trailing: Layout.gutter
-        ))
     }
 }
