@@ -61,7 +61,7 @@ struct ReminderListView: View {
             }
         }
         .task {
-            await NotificationScheduler.requestAuthorization()
+            await StartupPermissions.requestAll()
             let schedules = reminders.compactMap(\.schedule)
             await NotificationScheduler.syncAll(schedules)
         }
