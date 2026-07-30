@@ -61,16 +61,22 @@ struct ReminderListView: View {
             }
         }
         .task {
+            // A cold launch from a notification resolves the tap before this
+            // view exists, and `onChange` only reports transitions it was around
+            // for — so a tap already waiting has to be claimed here.
+            composePendingReminder()
+
             await StartupPermissions.requestAll()
             let schedules = reminders.compactMap(\.schedule)
             await NotificationScheduler.syncAll(schedules)
         }
-        .onChange(of: coordinator.pendingReminderID) { _, newValue in
-            guard let id = newValue else { return }
-            coordinator.pendingReminderID = nil
-
-            guard let reminder = reminders.first(where: { $0.identifier == id }) else { return }
-            compose(reminder)
+        .onChange(of: coordinator.pendingReminderID) { _, _ in
+            composePendingReminder()
+        }
+        // The tap can name a reminder the store hasn't handed us yet; the query
+        // filling in is the cue to try matching it again.
+        .onChange(of: reminders.count) { _, _ in
+            composePendingReminder()
         }
     }
 
@@ -110,6 +116,19 @@ struct ReminderListView: View {
             }
             .onDelete(perform: delete)
         }
+    }
+
+    /// Turns a tapped notification into an open Messages thread. The tap is only
+    /// cleared once it has been matched to a reminder, so one that arrives ahead
+    /// of the store loading is still honoured on the next pass.
+    private func composePendingReminder() {
+        guard
+            let id = coordinator.pendingReminderID,
+            let reminder = reminders.first(where: { $0.identifier == id })
+        else { return }
+
+        coordinator.pendingReminderID = nil
+        compose(reminder)
     }
 
     private func compose(_ reminder: Reminder) {
