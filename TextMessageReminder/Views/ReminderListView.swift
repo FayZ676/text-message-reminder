@@ -243,12 +243,18 @@ private struct ReminderRow: View {
                 Spacer(minLength: 0)
 
                 Button(action: onCompose) {
-                    if isGenerating {
-                        ProgressView().controlSize(.mini)
-                    } else {
-                        Image(systemName: "arrow.up.message")
-                            .font(.callout)
+                    Group {
+                        if isGenerating {
+                            ProgressView().controlSize(.mini)
+                        } else {
+                            Image(systemName: "arrow.up.message")
+                                .font(.subheadline)
+                        }
                     }
+                    // The glyph is wider than it is tall, so left to itself the
+                    // circle comes out an oval that crowds the arrow. Squaring the
+                    // label gives a real circle and even space on every side.
+                    .frame(width: Layout.iconButtonGlyph, height: Layout.iconButtonGlyph)
                 }
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
