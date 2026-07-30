@@ -91,11 +91,22 @@ struct ReminderListView: View {
                 ReminderRow(
                     reminder: reminder,
                     isGenerating: generatingReminderID == reminder.identifier,
-                    onCompose: { compose(reminder) },
-                    onToggle: { toggle(reminder) }
+                    onCompose: { compose(reminder) }
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { editingReminder = reminder }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        toggle(reminder)
+                    } label: {
+                        if reminder.isEnabled {
+                            Label("Pause", systemImage: "pause.circle")
+                        } else {
+                            Label("Resume", systemImage: "play.circle")
+                        }
+                    }
+                    .tint(reminder.isEnabled ? .orange : .green)
+                }
             }
             .onDelete(perform: delete)
         }
@@ -167,37 +178,38 @@ private struct ReminderRow: View {
     let reminder: Reminder
     let isGenerating: Bool
     let onCompose: () -> Void
-    let onToggle: () -> Void
 
     /// Contact and cadence share one line rather than costing the row a line each.
     /// An untitled reminder's title is already "Text <contact>", so naming the
     /// contact again there would just be the same word twice.
     private var summary: String {
-        guard !reminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return reminder.frequencySummary
+        var parts: [String] = []
+
+        if !reminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append(reminder.contactName.isEmpty ? reminder.contactHandle : reminder.contactName)
         }
-        let contact = reminder.contactName.isEmpty ? reminder.contactHandle : reminder.contactName
-        return "\(contact) · \(reminder.frequencySummary)"
+
+        parts.append(reminder.frequencySummary)
+
+        // The row used to carry a switch; with it gone, the dimming alone is too
+        // quiet to explain why a reminder never fires.
+        if !reminder.isEnabled { parts.append("Paused") }
+
+        return parts.joined(separator: " · ")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.snug) {
-            HStack(alignment: .top, spacing: Layout.regular) {
-                VStack(alignment: .leading, spacing: Layout.tight) {
-                    Text(reminder.effectiveTitle)
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: Layout.tight) {
+                Text(reminder.effectiveTitle)
+                    .font(.headline)
 
-                    Text(reminder.message)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 0)
-
-                Toggle("", isOn: Binding(get: { reminder.isEnabled }, set: { _ in onToggle() }))
-                    .labelsHidden()
+                Text(reminder.message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: Layout.regular) {
                 Text(summary)
