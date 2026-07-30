@@ -91,11 +91,22 @@ struct ReminderListView: View {
                 ReminderRow(
                     reminder: reminder,
                     isGenerating: generatingReminderID == reminder.identifier,
-                    onCompose: { compose(reminder) },
-                    onToggle: { toggle(reminder) }
+                    onCompose: { compose(reminder) }
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { editingReminder = reminder }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        toggle(reminder)
+                    } label: {
+                        if reminder.isEnabled {
+                            Label("Pause", systemImage: "pause.circle")
+                        } else {
+                            Label("Resume", systemImage: "play.circle")
+                        }
+                    }
+                    .tint(reminder.isEnabled ? .orange : .green)
+                }
             }
             .onDelete(perform: delete)
         }
@@ -167,37 +178,63 @@ private struct ReminderRow: View {
     let reminder: Reminder
     let isGenerating: Bool
     let onCompose: () -> Void
-    let onToggle: () -> Void
 
     /// Contact and cadence share one line rather than costing the row a line each.
     /// An untitled reminder's title is already "Text <contact>", so naming the
     /// contact again there would just be the same word twice.
     private var summary: String {
-        guard !reminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return reminder.frequencySummary
+        var parts: [String] = []
+
+        if !reminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append(reminder.contactName.isEmpty ? reminder.contactHandle : reminder.contactName)
         }
-        let contact = reminder.contactName.isEmpty ? reminder.contactHandle : reminder.contactName
-        return "\(contact) · \(reminder.frequencySummary)"
+
+        parts.append(reminder.frequencySummary)
+
+        // The row used to carry a switch; with it gone, the dimming alone is too
+        // quiet to explain why a reminder never fires.
+        if !reminder.isEnabled { parts.append("Paused") }
+
+        return parts.joined(separator: " · ")
     }
 
     var body: some View {
+        HStack(alignment: .top, spacing: Layout.regular) {
+            ContactAvatar(
+                name: reminder.contactName,
+                handle: reminder.contactHandle,
+                imageData: reminder.contactImageData
+            )
+
+            content
+        }
+        .opacity(reminder.isEnabled ? 1 : 0.5)
+        // Left alone the separator tucks under the row's deepest last subview,
+        // which is the compose button. Pinning it to the text column gives the
+        // avatar the same overhang Messages has.
+        .alignmentGuide(.listRowSeparatorLeading) { _ in Layout.avatarDiameter + Layout.regular }
+        // The same inset on all four sides, so the space above and below a row's
+        // content reads as the same margin as the space beside it.
+        .listRowInsets(EdgeInsets(
+            top: Layout.gutter,
+            leading: Layout.gutter,
+            bottom: Layout.gutter,
+            trailing: Layout.gutter
+        ))
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: Layout.snug) {
-            HStack(alignment: .top, spacing: Layout.regular) {
-                VStack(alignment: .leading, spacing: Layout.tight) {
-                    Text(reminder.effectiveTitle)
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: Layout.tight) {
+                Text(reminder.effectiveTitle)
+                    .font(.headline)
 
-                    Text(reminder.message)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 0)
-
-                Toggle("", isOn: Binding(get: { reminder.isEnabled }, set: { _ in onToggle() }))
-                    .labelsHidden()
+                Text(reminder.message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: Layout.regular) {
                 Text(summary)
@@ -208,33 +245,25 @@ private struct ReminderRow: View {
                 Spacer(minLength: 0)
 
                 Button(action: onCompose) {
-                    if isGenerating {
-                        Label {
-                            Text("Writing…")
-                        } icon: {
+                    Group {
+                        if isGenerating {
                             ProgressView().controlSize(.mini)
+                        } else {
+                            Image(systemName: "arrow.up.message")
+                                .font(.subheadline)
                         }
-                        .font(.caption.weight(.medium))
-                    } else {
-                        Label("Compose", systemImage: "arrow.up.message")
-                            .font(.caption.weight(.medium))
                     }
+                    // The glyph is wider than it is tall, so left to itself the
+                    // circle comes out an oval that crowds the arrow. Squaring the
+                    // label gives a real circle and even space on every side.
+                    .frame(width: Layout.iconButtonGlyph, height: Layout.iconButtonGlyph)
                 }
                 .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                .buttonBorderShape(.circle)
                 .controlSize(.small)
                 .disabled(isGenerating)
+                .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
             }
         }
-        .opacity(reminder.isEnabled ? 1 : 0.5)
-        // Without this the separator starts at the compose button, since that's the
-        // leading edge of the row's last subview.
-        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-        .listRowInsets(EdgeInsets(
-            top: Layout.regular,
-            leading: Layout.gutter,
-            bottom: Layout.regular,
-            trailing: Layout.gutter
-        ))
     }
 }

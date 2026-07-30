@@ -15,6 +15,12 @@ final class Reminder {
 
     var contactHandle: String
 
+    /// The contact's photo as it looked when they were picked. Snapshotting it
+    /// keeps the list rendering from depending on live Contacts permission, at
+    /// the cost of going stale if they change their photo later — re-picking the
+    /// contact refreshes it.
+    var contactImageData: Data?
+
     var frequencyRaw: String
 
     var hour: Int
@@ -37,6 +43,7 @@ final class Reminder {
         usesVariations: Bool = false,
         contactName: String = "",
         contactHandle: String = "",
+        contactImageData: Data? = nil,
         frequency: Frequency = .weekly,
         hour: Int = 9,
         minute: Int = 0,
@@ -52,6 +59,7 @@ final class Reminder {
         self.usesVariations = usesVariations
         self.contactName = contactName
         self.contactHandle = contactHandle
+        self.contactImageData = contactImageData
         self.frequencyRaw = frequency.rawValue
         self.hour = hour
         self.minute = minute

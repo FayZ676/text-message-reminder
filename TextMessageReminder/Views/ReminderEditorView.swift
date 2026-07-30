@@ -13,6 +13,7 @@ struct ReminderEditorView: View {
     @State private var usesVariations: Bool
     @State private var contactName: String
     @State private var contactHandle: String
+    @State private var contactImageData: Data?
     @State private var frequency: Frequency
     @State private var time: Date
     @State private var weekday: Int
@@ -33,6 +34,7 @@ struct ReminderEditorView: View {
         _usesVariations = State(initialValue: reminder?.usesVariations ?? false)
         _contactName = State(initialValue: reminder?.contactName ?? "")
         _contactHandle = State(initialValue: reminder?.contactHandle ?? "")
+        _contactImageData = State(initialValue: reminder?.contactImageData)
         _frequency = State(initialValue: reminder?.frequency ?? .weekly)
         _weekday = State(initialValue: reminder?.weekday ?? 2)
         let today = Self.todaysMonthAndDay()
@@ -71,7 +73,13 @@ struct ReminderEditorView: View {
                     Button {
                         isShowingContactPicker = true
                     } label: {
-                        HStack {
+                        HStack(spacing: Layout.regular) {
+                            ContactAvatar(
+                                name: contactName,
+                                handle: contactHandle,
+                                imageData: contactImageData
+                            )
+
                             if contactHandle.isEmpty {
                                 Text("Choose a contact")
                             } else {
@@ -149,9 +157,18 @@ struct ReminderEditorView: View {
             }
             .sheet(isPresented: $isShowingContactPicker) {
                 ContactPickerView { selection in
-                    if let selection {
-                        contactName = selection.name
-                        contactHandle = selection.handle
+                    guard let selection else { return }
+
+                    contactName = selection.name
+                    contactHandle = selection.handle
+
+                    // Clear the old photo first so an unphotographed contact
+                    // doesn't briefly wear the previous one's face.
+                    contactImageData = nil
+                    let identifier = selection.identifier
+                    Task {
+                        contactImageData = await ContactPhotoStore
+                            .thumbnail(forContactIdentifier: identifier)
                     }
                 }
                 .ignoresSafeArea()
@@ -248,6 +265,7 @@ struct ReminderEditorView: View {
         reminder.usesVariations = usesVariations
         reminder.contactName = contactName
         reminder.contactHandle = contactHandle
+        reminder.contactImageData = contactImageData
         reminder.frequency = frequency
         reminder.hour = components.hour ?? 9
         reminder.minute = components.minute ?? 0
