@@ -209,21 +209,17 @@ private struct ReminderRow: View {
 
                 Button(action: onCompose) {
                     if isGenerating {
-                        Label {
-                            Text("Writing…")
-                        } icon: {
-                            ProgressView().controlSize(.mini)
-                        }
-                        .font(.caption.weight(.medium))
+                        ProgressView().controlSize(.mini)
                     } else {
-                        Label("Compose", systemImage: "arrow.up.message")
-                            .font(.caption.weight(.medium))
+                        Image(systemName: "arrow.up.message")
+                            .font(.callout)
                     }
                 }
                 .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                .buttonBorderShape(.circle)
                 .controlSize(.small)
                 .disabled(isGenerating)
+                .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
             }
         }
         .opacity(reminder.isEnabled ? 1 : 0.5)
