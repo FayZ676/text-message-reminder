@@ -2,6 +2,8 @@ import XCTest
 
 final class ReminderEditorUITests: XCTestCase {
 
+    private let permissionPromptSteps = 3
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -10,15 +12,23 @@ final class ReminderEditorUITests: XCTestCase {
     private func launchApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launch()
-        dismissNotificationPromptIfPresent()
+        dismissPermissionPromptsIfPresent()
         return app
     }
 
-    private func dismissNotificationPromptIfPresent() {
+    private func dismissPermissionPromptsIfPresent() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allow = springboard.buttons["Allow"]
-        if allow.waitForExistence(timeout: 5) {
-            allow.tap()
+        let shareAll = springboard.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH 'Share All'")
+        ).firstMatch
+
+        for _ in 0..<permissionPromptSteps {
+            let candidates = ["Allow", "Continue"].map { springboard.buttons[$0] } + [shareAll]
+
+            guard let button = candidates.first(where: { $0.waitForExistence(timeout: 3) })
+            else { return }
+
+            button.tap()
         }
     }
 
