@@ -13,7 +13,8 @@ enum Layout {
     /// Between a block of content and a control sitting beside it.
     static let regular: CGFloat = 12
 
-    /// A grouped list row's horizontal content inset, matching UIKit.
+    /// A grouped list row's content inset, matching UIKit's horizontal one and
+    /// used on all four sides so a row's margins are even.
     static let gutter: CGFloat = 16
 
     /// A contact avatar, sized like the ones in Messages' conversation list.

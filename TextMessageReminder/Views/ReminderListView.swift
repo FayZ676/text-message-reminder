@@ -213,10 +213,12 @@ private struct ReminderRow: View {
         // which is the compose button. Pinning it to the text column gives the
         // avatar the same overhang Messages has.
         .alignmentGuide(.listRowSeparatorLeading) { _ in Layout.avatarDiameter + Layout.regular }
+        // The same inset on all four sides, so the space above and below a row's
+        // content reads as the same margin as the space beside it.
         .listRowInsets(EdgeInsets(
-            top: Layout.regular,
+            top: Layout.gutter,
             leading: Layout.gutter,
-            bottom: Layout.regular,
+            bottom: Layout.gutter,
             trailing: Layout.gutter
         ))
     }
