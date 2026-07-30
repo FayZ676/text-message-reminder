@@ -209,10 +209,10 @@ private struct ReminderRow: View {
             content
         }
         .opacity(reminder.isEnabled ? 1 : 0.5)
-        // Left alone the separator tucks under the row's deepest last subview,
-        // which is the compose button. Pinning it to the text column gives the
-        // avatar the same overhang Messages has.
-        .alignmentGuide(.listRowSeparatorLeading) { _ in Layout.avatarDiameter + Layout.regular }
+        // Left alone the separator starts at the row's deepest last subview. Zero
+        // runs it the full width, so it meets the row's leading inset the same way
+        // it already meets the trailing one.
+        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
         .listRowInsets(EdgeInsets(
             top: Layout.regular,
             leading: Layout.gutter,
@@ -222,46 +222,52 @@ private struct ReminderRow: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: Layout.snug) {
-            VStack(alignment: .leading, spacing: Layout.tight) {
-                Text(reminder.effectiveTitle)
-                    .font(.headline)
+        // The button rides alongside the whole text column rather than under it,
+        // so it lands beside the title instead of on a line of its own.
+        HStack(alignment: .top, spacing: Layout.regular) {
+            VStack(alignment: .leading, spacing: Layout.snug) {
+                VStack(alignment: .leading, spacing: Layout.tight) {
+                    Text(reminder.effectiveTitle)
+                        .font(.headline)
 
-                Text(reminder.message)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+                    // One line: the row is a glance at what's queued, and the full
+                    // text is a tap away in the editor.
+                    Text(reminder.message)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
 
-            HStack(spacing: Layout.regular) {
                 Text(summary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-
-                Spacer(minLength: 0)
-
-                Button(action: onCompose) {
-                    Group {
-                        if isGenerating {
-                            ProgressView().controlSize(.mini)
-                        } else {
-                            Image(systemName: "arrow.up.message")
-                                .font(.subheadline)
-                        }
-                    }
-                    // The glyph is wider than it is tall, so left to itself the
-                    // circle comes out an oval that crowds the arrow. Squaring the
-                    // label gives a real circle and even space on every side.
-                    .frame(width: Layout.iconButtonGlyph, height: Layout.iconButtonGlyph)
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .controlSize(.small)
-                .disabled(isGenerating)
-                .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            composeButton
         }
+    }
+
+    private var composeButton: some View {
+        Button(action: onCompose) {
+            Group {
+                if isGenerating {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: "arrow.up.message")
+                        .font(.subheadline)
+                }
+            }
+            // The glyph is wider than it is tall, so left to itself the circle
+            // comes out an oval that crowds the arrow. Squaring the label gives a
+            // real circle and even space on every side.
+            .frame(width: Layout.iconButtonGlyph, height: Layout.iconButtonGlyph)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.circle)
+        .controlSize(.small)
+        .disabled(isGenerating)
+        .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
     }
 }
