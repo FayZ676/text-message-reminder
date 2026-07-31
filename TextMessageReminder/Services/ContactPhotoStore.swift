@@ -9,7 +9,7 @@ import Foundation
 /// Contacts permission — the picker alone needs none.
 ///
 /// Every failure here is deliberately silent. The avatar falls back to a
-/// monogram, and nothing about creating or firing a reminder depends on the
+/// monogram, and nothing about creating or sending a message depends on the
 /// photo, so a denied prompt or a since-deleted contact isn't worth an alert.
 enum ContactPhotoStore {
 

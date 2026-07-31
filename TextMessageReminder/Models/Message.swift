@@ -2,12 +2,12 @@ import Foundation
 import SwiftData
 
 @Model
-final class Reminder {
+final class Message {
     var identifier: UUID
 
     var title: String
 
-    var message: String
+    var text: String
 
     var usesVariations: Bool
 
@@ -36,10 +36,12 @@ final class Reminder {
 
     var createdAt: Date
 
+    var group: MessageGroup?
+
     init(
         identifier: UUID = UUID(),
         title: String = "",
-        message: String = "",
+        text: String = "",
         usesVariations: Bool = false,
         contactName: String = "",
         contactHandle: String = "",
@@ -51,11 +53,12 @@ final class Reminder {
         dayOfMonth: Int = 1,
         month: Int = 1,
         isEnabled: Bool = true,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        group: MessageGroup? = nil
     ) {
         self.identifier = identifier
         self.title = title
-        self.message = message
+        self.text = text
         self.usesVariations = usesVariations
         self.contactName = contactName
         self.contactHandle = contactHandle
@@ -68,6 +71,7 @@ final class Reminder {
         self.month = month
         self.isEnabled = isEnabled
         self.createdAt = createdAt
+        self.group = group
     }
 
     var frequency: Frequency {
@@ -87,15 +91,15 @@ final class Reminder {
 
     var isComplete: Bool {
         !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    var schedule: ReminderSchedule? {
+    var schedule: MessageSchedule? {
         guard isEnabled, isComplete else { return nil }
-        return ReminderSchedule(
+        return MessageSchedule(
             identifier: notificationIdentifier,
             title: effectiveTitle,
-            body: message,
+            body: text,
             components: triggerComponents
         )
     }

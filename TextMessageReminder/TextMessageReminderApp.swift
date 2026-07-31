@@ -15,10 +15,10 @@ struct TextMessageReminderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ReminderListView()
+            MessageListView()
                 .environmentObject(coordinator)
         }
-        .modelContainer(for: Reminder.self, inMemory: Self.isUITesting)
+        .modelContainer(for: [Message.self, MessageGroup.self], inMemory: Self.isUITesting)
     }
 }
 

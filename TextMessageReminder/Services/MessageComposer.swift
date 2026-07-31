@@ -1,38 +1,52 @@
 import Foundation
-import UIKit
 
-enum MessageComposer {
+@MainActor
+final class MessageComposer: ObservableObject {
 
-    private static let handleAllowed = CharacterSet(charactersIn: "+0123456789@._-")
+    @Published var generatingID: UUID?
 
-    static func normalizedHandle(_ handle: String) -> String {
-        String(handle.unicodeScalars.filter { handleAllowed.contains($0) })
+    @Published var failure: String?
+
+    func compose(_ message: Message) {
+        guard message.usesVariations else {
+            openMessages(for: message, body: message.text)
+            return
+        }
+
+        guard generatingID == nil else { return }
+
+        let request = VariationRequest(
+            baseMessage: message.text,
+            contactName: message.contactName,
+            title: message.effectiveTitle
+        )
+
+        generatingID = message.identifier
+
+        Task {
+            var body = message.text
+            var reason: String?
+
+            do {
+                body = try await MessageVariationService.variation(for: request)
+            } catch MessageVariationError.missingAPIKey {
+                reason = "Add your Anthropic API key in Settings to vary this message. Sending it as written for now."
+            } catch MessageVariationError.requestFailed(let detail) {
+                reason = "Couldn't rewrite this message, so it's going out as written.\n\n\(detail)"
+            } catch {
+                reason = "Couldn't rewrite this message, so it's going out as written."
+            }
+
+            generatingID = nil
+            openMessages(for: message, body: body)
+
+            if failure == nil { failure = reason }
+        }
     }
 
-    static func composeURL(handle: String, body: String) -> URL? {
-        let cleanedHandle = normalizedHandle(handle)
-        guard !cleanedHandle.isEmpty else { return nil }
-
-        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
-
-        return URL(string: "sms:\(cleanedHandle)&body=\(encodedBody)")
-    }
-
-    static func composeURL(for reminder: Reminder) -> URL? {
-        composeURL(handle: reminder.contactHandle, body: reminder.message)
-    }
-
-    @MainActor
-    @discardableResult
-    static func open(for reminder: Reminder) -> Bool {
-        open(for: reminder, body: reminder.message)
-    }
-
-    @MainActor
-    @discardableResult
-    static func open(for reminder: Reminder, body: String) -> Bool {
-        guard let url = composeURL(handle: reminder.contactHandle, body: body) else { return false }
-        UIApplication.shared.open(url)
-        return true
+    private func openMessages(for message: Message, body: String) {
+        if !MessagesLink.open(for: message, body: body) {
+            failure = "\"\(message.effectiveTitle)\" doesn't have a usable phone number or email yet."
+        }
     }
 }

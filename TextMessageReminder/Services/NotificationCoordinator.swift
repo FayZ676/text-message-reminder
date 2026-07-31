@@ -12,7 +12,7 @@ final class NotificationCoordinator: NSObject, ObservableObject {
     /// Set when a notification is tapped, cleared once Messages has been opened
     /// for it. It outlives the tap on purpose: a cold launch resolves the tap
     /// before the list exists, and the list claims it when it appears.
-    @Published var pendingReminderID: UUID?
+    @Published var pendingMessageID: UUID?
 
     func start() {
         UNUserNotificationCenter.current().delegate = self
@@ -43,12 +43,12 @@ extension NotificationCoordinator: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
 
         guard
-            let raw = userInfo[NotificationScheduler.reminderIDKey] as? String,
+            let raw = userInfo[NotificationScheduler.messageIDKey] as? String,
             let id = UUID(uuidString: raw)
         else { return }
 
         await MainActor.run {
-            self.pendingReminderID = id
+            self.pendingMessageID = id
         }
     }
 }

@@ -1,6 +1,6 @@
 import XCTest
 
-final class ReminderEditorUITests: XCTestCase {
+final class MessageEditorUITests: XCTestCase {
 
     private let permissionPromptSteps = 3
 
@@ -35,9 +35,9 @@ final class ReminderEditorUITests: XCTestCase {
     func testEditorStaysOpenAfterDismissingContactPicker() {
         let app = launchApp()
 
-        app.buttons["Add Reminder"].firstMatch.tap()
+        app.buttons["Add Message"].firstMatch.tap()
 
-        let editor = app.navigationBars["New Reminder"]
+        let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")
 
         app.buttons["Choose a contact"].firstMatch.tap()
@@ -59,8 +59,8 @@ final class ReminderEditorUITests: XCTestCase {
     func testContactPickerCanBeReopenedAfterCancelling() {
         let app = launchApp()
 
-        app.buttons["Add Reminder"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["New Reminder"].waitForExistence(timeout: 5))
+        app.buttons["Add Message"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Message"].waitForExistence(timeout: 5))
 
         for attempt in 1...2 {
             app.buttons["Choose a contact"].firstMatch.tap()
@@ -73,7 +73,7 @@ final class ReminderEditorUITests: XCTestCase {
 
             pickerBar.buttons["Cancel"].tap()
             XCTAssertTrue(
-                app.navigationBars["New Reminder"].waitForExistence(timeout: 5),
+                app.navigationBars["New Message"].waitForExistence(timeout: 5),
                 "The editor should still be open after attempt \(attempt)."
             )
         }
@@ -82,9 +82,9 @@ final class ReminderEditorUITests: XCTestCase {
     func testSaveIsDisabledWithoutContactAndMessage() {
         let app = launchApp()
 
-        app.buttons["Add Reminder"].firstMatch.tap()
+        app.buttons["Add Message"].firstMatch.tap()
 
-        let editor = app.navigationBars["New Reminder"]
+        let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")
 
         XCTAssertFalse(

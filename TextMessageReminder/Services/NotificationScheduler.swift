@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 
-struct ReminderSchedule: Sendable, Equatable {
+struct MessageSchedule: Sendable, Equatable {
     let identifier: String
     let title: String
     let body: String
@@ -10,9 +10,9 @@ struct ReminderSchedule: Sendable, Equatable {
 
 enum NotificationScheduler {
 
-    static let categoryIdentifier = "REMINDER"
+    static let categoryIdentifier = "MESSAGE"
     static let composeActionIdentifier = "COMPOSE"
-    static let reminderIDKey = "reminderID"
+    static let messageIDKey = "messageID"
 
     private static var center: UNUserNotificationCenter { .current() }
 
@@ -42,13 +42,13 @@ enum NotificationScheduler {
         center.setNotificationCategories([category])
     }
 
-    static func schedule(_ schedule: ReminderSchedule) async {
+    static func schedule(_ schedule: MessageSchedule) async {
         let content = UNMutableNotificationContent()
         content.title = schedule.title
         content.body = schedule.body
         content.sound = .default
         content.categoryIdentifier = categoryIdentifier
-        content.userInfo = [reminderIDKey: schedule.identifier]
+        content.userInfo = [messageIDKey: schedule.identifier]
 
         let trigger = UNCalendarNotificationTrigger(
             dateMatching: schedule.components,
@@ -68,13 +68,13 @@ enum NotificationScheduler {
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
     }
 
-    static func reschedule(identifier: String, schedule: ReminderSchedule?) async {
+    static func reschedule(identifier: String, schedule: MessageSchedule?) async {
         cancel(identifier: identifier)
         guard let schedule else { return }
         await self.schedule(schedule)
     }
 
-    static func syncAll(_ schedules: [ReminderSchedule]) async {
+    static func syncAll(_ schedules: [MessageSchedule]) async {
         let pending = await center.pendingNotificationRequests()
         let liveIdentifiers = Set(schedules.map(\.identifier))
 

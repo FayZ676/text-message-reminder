@@ -1,6 +1,6 @@
 import XCTest
 
-final class CreateReminderUITests: XCTestCase {
+final class CreateMessageUITests: XCTestCase {
 
     private let contactName = "David Taylor"
     private let contactHandle = "555-610-6679"
@@ -23,13 +23,13 @@ final class CreateReminderUITests: XCTestCase {
         return app
     }
 
-    func testCreateReminderFromContactAppearsInList() {
+    func testCreateMessageFromContactAppearsInList() {
         let app = launchApp()
         let message = "Hey David, checking in!"
 
-        app.buttons["Add Reminder"].firstMatch.tap()
+        app.buttons["Add Message"].firstMatch.tap()
 
-        let editor = app.navigationBars["New Reminder"]
+        let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")
 
         app.buttons["Choose a contact"].firstMatch.tap()
@@ -59,35 +59,35 @@ final class CreateReminderUITests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(
-            app.navigationBars["Reminders"].waitForExistence(timeout: 5),
+            app.navigationBars["Messages"].waitForExistence(timeout: 5),
             "Saving should return to the list."
         )
         XCTAssertTrue(
             app.staticTexts[message].waitForExistence(timeout: 5),
-            "The saved reminder should appear in the list."
+            "The saved message should appear in the list."
         )
         // The row puts the contact and the cadence on one summary line, so match
         // on the contact appearing within it rather than as a label of its own.
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", contactName))
                 .firstMatch.waitForExistence(timeout: 5),
-            "The reminder row should name the contact."
+            "The message row should name the contact."
         )
     }
 
-    func testSecondReminderAlsoAppearsInList() {
+    func testSecondMessageAlsoAppearsInList() {
         let app = launchApp()
 
         add(to: app, contact: contactName, message: "First message")
         XCTAssertTrue(
             app.staticTexts["First message"].waitForExistence(timeout: 5),
-            "The first reminder should appear."
+            "The first message should appear."
         )
 
         add(to: app, contact: "Kate Bell", message: "Second message")
         XCTAssertTrue(
             app.staticTexts["Second message"].waitForExistence(timeout: 5),
-            "The second reminder should appear too."
+            "The second message should appear too."
         )
         XCTAssertTrue(app.staticTexts["First message"].exists, "The first should still be listed.")
     }
@@ -95,20 +95,20 @@ final class CreateReminderUITests: XCTestCase {
     func testEditorExplainsWhySaveIsDisabled() {
         let app = launchApp()
 
-        app.buttons["Add Reminder"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["New Reminder"].waitForExistence(timeout: 5))
+        app.buttons["Add Message"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Message"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(
-            app.staticTexts["Choose a contact and write a message to save this reminder."]
+            app.staticTexts["Choose a contact and write a message to save it."]
                 .waitForExistence(timeout: 5),
             "The form should say what's still missing."
         )
     }
 
     private func add(to app: XCUIApplication, contact: String, message: String) {
-        app.buttons["Add Reminder"].firstMatch.tap()
+        app.buttons["Add Message"].firstMatch.tap()
 
-        let editor = app.navigationBars["New Reminder"]
+        let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor should open.")
 
         app.buttons["Choose a contact"].firstMatch.tap()
@@ -125,6 +125,6 @@ final class CreateReminderUITests: XCTestCase {
 
         XCTAssertTrue(editor.buttons["Save"].isEnabled, "Save should enable once both are set.")
         editor.buttons["Save"].tap()
-        XCTAssertTrue(app.navigationBars["Reminders"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Messages"].waitForExistence(timeout: 5))
     }
 }

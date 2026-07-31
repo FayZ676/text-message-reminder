@@ -17,7 +17,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Anthropic API key")
                 } footer: {
-                    Text("Needed only for reminders with \"Vary this message\" turned on. Create a key at console.anthropic.com. It's stored in your device's keychain, and any messages rewritten are billed to it.")
+                    Text("Needed only for messages with \"Vary this message\" turned on. Create a key at console.anthropic.com. It's stored in your device's keychain, and any messages rewritten are billed to it.")
                 }
 
                 if hasStoredKey {

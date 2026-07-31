@@ -2,7 +2,7 @@ import XCTest
 
 extension XCUIApplication {
 
-    private static let ownNavigationBars = ["Reminders", "New Reminder", "Edit Reminder", "Settings"]
+    private static let ownNavigationBars = ["Messages", "New Message", "Edit Message", "Settings"]
 
     var pickerNavigationBar: XCUIElement {
         navigationBars

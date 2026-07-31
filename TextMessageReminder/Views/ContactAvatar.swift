@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The person a reminder is about: their contact photo when we have one, their
+/// The person a message is about: their contact photo when we have one, their
 /// initials when we don't. Purely decorative — every place it appears already
 /// names the contact in text, so it stays out of the accessibility tree.
 struct ContactAvatar: View {

@@ -19,10 +19,23 @@ enum Layout {
     /// A contact avatar, sized like the ones in Messages' conversation list.
     static let avatarDiameter: CGFloat = 40
 
-    /// The square a glyph sits in inside a circular icon button. With the bordered
-    /// style's padding around it this lands on a ~32pt circle, the size iOS gives
-    /// the round buttons it tucks into list rows.
-    static let iconButtonGlyph: CGFloat = 24
+    /// A contact photo or group glyph as it appears in a main list row.
+    static let listRowIconDiameter: CGFloat = 52
+
+    /// A group's colored symbol as it appears in a row, sized to sit beside a
+    /// single line of text without crowding it.
+    static let groupGlyphDiameter: CGFloat = 30
+
+    /// The same glyph as the header of the group editor, where it's the preview of
+    /// what you're building.
+    static let groupGlyphPreviewDiameter: CGFloat = 72
+
+    /// A color or symbol swatch in the group editor's grids, at the 44pt tap target
+    /// iOS asks for once its padding is counted.
+    static let swatchDiameter: CGFloat = 38
+
+    /// The width a bare icon button reserves for its glyph or a spinner.
+    static let iconButtonGlyph: CGFloat = 28
 
     /// `TextEditor` draws its text 5pt inside its own bounds. Subtracting that
     /// from the row's insets lines the message up with every other row in the

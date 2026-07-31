@@ -18,7 +18,7 @@ enum MessageVariationService {
     private static let model = "claude-haiku-4-5"
 
     private static let systemPrompt = """
-        You rewrite short personal text messages so that a recurring reminder doesn't send the \
+        You rewrite short personal text messages so that a recurring message doesn't send the \
         exact same words every time.
 
         Rewrite the user's message with different wording while keeping the same intent, warmth, \
@@ -107,7 +107,7 @@ enum MessageVariationService {
 
         let title = request.title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !title.isEmpty {
-            lines.append("The sender labelled this reminder: \(title)")
+            lines.append("The sender labelled this message: \(title)")
         }
 
         return lines.joined(separator: "\n")
