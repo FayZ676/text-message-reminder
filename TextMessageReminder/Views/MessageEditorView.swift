@@ -27,6 +27,9 @@ struct MessageEditorView: View {
 
     @State private var resolvedBirthday: DateComponents?
     @State private var birthdayDraft: Date
+    @State private var birthdayMonth: Int
+    @State private var birthdayDay: Int
+    @State private var knowsBirthYear = false
     @State private var savesBirthdayToCard = true
 
     @State private var isShowingContactPicker = false
@@ -61,18 +64,20 @@ struct MessageEditorView: View {
         components.minute = message?.minute ?? 0
         _time = State(initialValue: Calendar.current.date(from: components) ?? Date())
 
-        _birthdayDraft = State(initialValue: Self.draftBirthday(for: message))
+        let birthday = Self.draftBirthday(for: message)
+        _birthdayMonth = State(initialValue: birthday.month)
+        _birthdayDay = State(initialValue: birthday.day)
+
+        var birthdayComponents = DateComponents()
+        birthdayComponents.year = Calendar.current.component(.year, from: Date())
+        birthdayComponents.month = birthday.month
+        birthdayComponents.day = birthday.day
+        _birthdayDraft = State(initialValue: Calendar.current.date(from: birthdayComponents) ?? Date())
     }
 
-    private static func draftBirthday(for message: Message?) -> Date {
-        guard let message, message.frequency == .birthday else { return Date() }
-
-        var components = DateComponents()
-        components.year = 1990
-        components.month = message.month
-        components.day = message.dayOfMonth
-
-        return Calendar.current.date(from: components) ?? Date()
+    private static func draftBirthday(for message: Message?) -> (month: Int, day: Int) {
+        guard let message, message.frequency == .birthday else { return todaysMonthAndDay() }
+        return (message.month, message.dayOfMonth)
     }
 
     private var canSave: Bool {
@@ -198,6 +203,10 @@ struct MessageEditorView: View {
             }
             .task { await loadBirthday() }
             .onChange(of: yearlyMonth) { clampYearlyDay() }
+            .onChange(of: birthdayMonth) { clampBirthdayDay() }
+            .onChange(of: knowsBirthYear) { _, includesYear in
+                syncBirthdayDraft(includingYear: includesYear)
+            }
             .navigationTitle(existing == nil ? "New Message" : "Edit Message")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -283,11 +292,27 @@ struct MessageEditorView: View {
                 }
             case .birthday:
                 if resolvedBirthday == nil {
-                    DatePicker(
-                        "Birthday",
-                        selection: $birthdayDraft,
-                        displayedComponents: .date
-                    )
+                    if knowsBirthYear {
+                        DatePicker(
+                            "Birthday",
+                            selection: $birthdayDraft,
+                            in: Self.earliestBirthday...Date(),
+                            displayedComponents: .date
+                        )
+                    } else {
+                        Picker("Month", selection: $birthdayMonth) {
+                            ForEach(1...12, id: \.self) { value in
+                                Text(Frequency.monthName(value)).tag(value)
+                            }
+                        }
+                        Picker("Day", selection: $birthdayDay) {
+                            ForEach(1...Frequency.lastSelectableDay(inMonth: birthdayMonth), id: \.self) { day in
+                                Text(Frequency.ordinal(day)).tag(day)
+                            }
+                        }
+                    }
+
+                    Toggle("Include birth year", isOn: $knowsBirthYear)
 
                     Toggle("Add to \(possessiveName) card", isOn: $savesBirthdayToCard)
                 }
@@ -363,6 +388,35 @@ struct MessageEditorView: View {
         resolvedBirthday = birthday
     }
 
+    private func syncBirthdayDraft(includingYear: Bool) {
+        let calendar = Calendar.current
+
+        guard includingYear else {
+            let components = calendar.dateComponents([.month, .day], from: birthdayDraft)
+            birthdayMonth = components.month ?? birthdayMonth
+            birthdayDay = components.day ?? birthdayDay
+            return
+        }
+
+        var components = DateComponents()
+        components.year = calendar.component(.year, from: Date())
+        components.month = birthdayMonth
+        components.day = birthdayDay
+
+        guard let date = calendar.date(from: components) else { return }
+
+        birthdayDraft = date > Date()
+            ? calendar.date(byAdding: .year, value: -1, to: date) ?? date
+            : date
+    }
+
+    private func clampBirthdayDay() {
+        let lastDay = Frequency.lastSelectableDay(inMonth: birthdayMonth)
+        if birthdayDay > lastDay {
+            birthdayDay = lastDay
+        }
+    }
+
     private func clampYearlyDay() {
         let lastDay = Frequency.lastSelectableDay(inMonth: yearlyMonth)
         if yearlyDay > lastDay {
@@ -370,8 +424,19 @@ struct MessageEditorView: View {
         }
     }
 
+    private static let earliestBirthday: Date = {
+        Calendar.current.date(byAdding: .year, value: -130, to: Date()) ?? .distantPast
+    }()
+
     private var draftBirthdayComponents: DateComponents {
-        Calendar.current.dateComponents([.year, .month, .day], from: birthdayDraft)
+        guard knowsBirthYear else {
+            var components = DateComponents()
+            components.month = birthdayMonth
+            components.day = birthdayDay
+            return components
+        }
+
+        return Calendar.current.dateComponents([.year, .month, .day], from: birthdayDraft)
     }
 
     private var birthdayMonthAndDay: (month: Int, day: Int)? {
