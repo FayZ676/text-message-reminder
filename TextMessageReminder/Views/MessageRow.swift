@@ -29,9 +29,9 @@ struct MessageRow: View {
             )
 
             content
+                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         }
         .opacity(message.isEnabled ? 1 : 0.5)
-        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
         .listRowInsets(EdgeInsets(
             top: Layout.regular,
             leading: Layout.gutter,
