@@ -5,6 +5,7 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
     case weekly
     case monthly
     case yearly
+    case birthday
 
     var id: String { rawValue }
 
@@ -14,7 +15,12 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
         case .weekly: "Weekly"
         case .monthly: "Monthly"
         case .yearly: "Yearly"
+        case .birthday: "Birthday"
         }
+    }
+
+    static func options(hasContact: Bool) -> [Frequency] {
+        hasContact ? allCases : allCases.filter { $0 != .birthday }
     }
 
     func dateComponents(hour: Int, minute: Int, weekday: Int, dayOfMonth: Int, month: Int) -> DateComponents {
@@ -29,7 +35,7 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
             components.weekday = weekday
         case .monthly:
             components.day = dayOfMonth
-        case .yearly:
+        case .yearly, .birthday:
             components.month = month
             components.day = dayOfMonth
         }
@@ -47,7 +53,7 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
             return "Every \(Self.weekdayName(weekday)) at \(time)"
         case .monthly:
             return "On the \(Self.ordinal(dayOfMonth)) at \(time)"
-        case .yearly:
+        case .yearly, .birthday:
             return "Every \(Self.monthName(month)) \(Self.ordinal(dayOfMonth)) at \(time)"
         }
     }

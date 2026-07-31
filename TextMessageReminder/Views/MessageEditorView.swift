@@ -16,6 +16,7 @@ struct MessageEditorView: View {
     @State private var contactName: String
     @State private var contactHandle: String
     @State private var contactImageData: Data?
+    @State private var contactIdentifier: String
     @State private var frequency: Frequency
     @State private var time: Date
     @State private var weekday: Int
@@ -24,8 +25,14 @@ struct MessageEditorView: View {
     @State private var yearlyMonth: Int
     @State private var groupID: UUID?
 
+    @State private var resolvedBirthday: DateComponents?
+    @State private var birthdayDraft: Date
+    @State private var savesBirthdayToCard = true
+
     @State private var isShowingContactPicker = false
     @State private var isAddingGroup = false
+
+    @State private var draft: Message?
 
     @State private var saveFailure: String?
 
@@ -40,6 +47,7 @@ struct MessageEditorView: View {
         _contactName = State(initialValue: message?.contactName ?? "")
         _contactHandle = State(initialValue: message?.contactHandle ?? "")
         _contactImageData = State(initialValue: message?.contactImageData)
+        _contactIdentifier = State(initialValue: message?.contactIdentifier ?? "")
         _frequency = State(initialValue: message?.frequency ?? .weekly)
         _weekday = State(initialValue: message?.weekday ?? 2)
         let today = Self.todaysMonthAndDay()
@@ -52,15 +60,26 @@ struct MessageEditorView: View {
         components.hour = message?.hour ?? 9
         components.minute = message?.minute ?? 0
         _time = State(initialValue: Calendar.current.date(from: components) ?? Date())
+
+        _birthdayDraft = State(initialValue: Self.draftBirthday(for: message))
+    }
+
+    private static func draftBirthday(for message: Message?) -> Date {
+        guard let message, message.frequency == .birthday else { return Date() }
+
+        var components = DateComponents()
+        components.year = 1990
+        components.month = message.month
+        components.day = message.dayOfMonth
+
+        return Calendar.current.date(from: components) ?? Date()
     }
 
     private var canSave: Bool {
-        !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        hasContact && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var missingRequirement: String? {
-        let hasContact = !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let hasMessage = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
         switch (hasContact, hasMessage) {
@@ -177,6 +196,7 @@ struct MessageEditorView: View {
                     }
                 }
             }
+            .task { await loadBirthday() }
             .onChange(of: yearlyMonth) { clampYearlyDay() }
             .navigationTitle(existing == nil ? "New Message" : "Edit Message")
             .navigationBarTitleDisplayMode(.inline)
@@ -195,15 +215,18 @@ struct MessageEditorView: View {
 
                     contactName = selection.name
                     contactHandle = selection.handle
+                    contactIdentifier = selection.identifier
 
                     // Clear the old photo first so an unphotographed contact
                     // doesn't briefly wear the previous one's face.
                     contactImageData = nil
+                    resolvedBirthday = nil
                     let identifier = selection.identifier
                     Task {
                         contactImageData = await ContactPhotoStore
                             .thumbnail(forContactIdentifier: identifier)
                     }
+                    Task { await loadBirthday() }
                 }
                 .ignoresSafeArea()
             }
@@ -225,7 +248,7 @@ struct MessageEditorView: View {
     private var scheduleSection: some View {
         Section {
             Picker("Repeats", selection: $frequency) {
-                ForEach(Frequency.allCases) { option in
+                ForEach(Frequency.options(hasContact: hasContact)) { option in
                     Text(option.displayName).tag(option)
                 }
             }
@@ -258,19 +281,63 @@ struct MessageEditorView: View {
                         Text(Frequency.ordinal(day)).tag(day)
                     }
                 }
+            case .birthday:
+                if resolvedBirthday == nil {
+                    DatePicker(
+                        "Birthday",
+                        selection: $birthdayDraft,
+                        displayedComponents: .date
+                    )
+
+                    Toggle("Add to \(possessiveName) card", isOn: $savesBirthdayToCard)
+                }
             }
         } header: {
             Text("When")
         } footer: {
-            if let dayCapNote {
-                Text(dayCapNote)
+            if let scheduleNote {
+                Text(scheduleNote)
             }
         }
     }
 
+    private var hasContact: Bool {
+        !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var firstName: String? {
+        let first = contactName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+            .first
+            .map(String.init)
+
+        return first?.isEmpty == false ? first : nil
+    }
+
+    private var possessiveName: String {
+        firstName.map { "\($0)'s" } ?? "their"
+    }
+
+    private var scheduleNote: String? {
+        guard frequency == .birthday else { return dayCapNote }
+
+        let name = firstName ?? "This contact"
+
+        guard let birthday = resolvedBirthday, let date = birthday.recurringMonthAndDay else {
+            return """
+                \(name) doesn't have a birthday on their contact card yet.
+
+                Birthdays live on the contact card in Contacts. Adding one there means this app, Calendar, and anything else on your iPhone can use it.
+                """
+        }
+
+        return "Sends every \(Frequency.monthName(date.month)) \(Frequency.ordinal(date.day)), \(possessiveName) birthday."
+    }
+
     private var dayCapNote: String? {
         switch frequency {
-        case .daily, .weekly:
+        case .daily, .weekly, .birthday:
             nil
         case .monthly:
             "Capped at the 28th so the message sends in every month."
@@ -286,6 +353,16 @@ struct MessageEditorView: View {
         return (month, day)
     }
 
+    private func loadBirthday() async {
+        let identifier = contactIdentifier
+        guard !identifier.isEmpty else { return }
+
+        let birthday = await ContactBirthdayStore.birthday(forContactIdentifier: identifier)
+        guard identifier == contactIdentifier else { return }
+
+        resolvedBirthday = birthday
+    }
+
     private func clampYearlyDay() {
         let lastDay = Frequency.lastSelectableDay(inMonth: yearlyMonth)
         if yearlyDay > lastDay {
@@ -293,9 +370,24 @@ struct MessageEditorView: View {
         }
     }
 
+    private var draftBirthdayComponents: DateComponents {
+        Calendar.current.dateComponents([.year, .month, .day], from: birthdayDraft)
+    }
+
+    private var birthdayMonthAndDay: (month: Int, day: Int)? {
+        (resolvedBirthday ?? draftBirthdayComponents).recurringMonthAndDay
+    }
+
+    private var shouldAddBirthdayToCard: Bool {
+        frequency == .birthday
+            && resolvedBirthday == nil
+            && savesBirthdayToCard
+            && !contactIdentifier.isEmpty
+    }
+
     private func save() {
         let components = Calendar.current.dateComponents([.hour, .minute], from: time)
-        let message = existing ?? Message()
+        let message = existing ?? draft ?? Message()
 
         message.title = title
         message.text = text
@@ -303,15 +395,22 @@ struct MessageEditorView: View {
         message.contactName = contactName
         message.contactHandle = contactHandle
         message.contactImageData = contactImageData
+        message.contactIdentifier = contactIdentifier
         message.frequency = frequency
         message.hour = components.hour ?? 9
         message.minute = components.minute ?? 0
         message.weekday = weekday
-        message.dayOfMonth = frequency == .yearly ? yearlyDay : monthlyDay
-        message.month = yearlyMonth
         message.group = groups.first { $0.identifier == groupID }
 
-        if existing == nil {
+        if frequency == .birthday, let birthday = birthdayMonthAndDay {
+            message.month = birthday.month
+            message.dayOfMonth = birthday.day
+        } else {
+            message.dayOfMonth = frequency == .yearly ? yearlyDay : monthlyDay
+            message.month = yearlyMonth
+        }
+
+        if existing == nil && draft == nil {
             modelContext.insert(message)
         }
 
@@ -322,10 +421,27 @@ struct MessageEditorView: View {
             return
         }
 
+        draft = message
+
         let identifier = message.notificationIdentifier
         let schedule = message.schedule
         Task { await NotificationScheduler.reschedule(identifier: identifier, schedule: schedule) }
 
-        dismiss()
+        guard shouldAddBirthdayToCard else {
+            dismiss()
+            return
+        }
+
+        let birthday = draftBirthdayComponents
+        let contact = contactIdentifier
+
+        Task {
+            do {
+                try await ContactBirthdayStore.setBirthday(birthday, forContactIdentifier: contact)
+                dismiss()
+            } catch {
+                saveFailure = error.localizedDescription
+            }
+        }
     }
 }

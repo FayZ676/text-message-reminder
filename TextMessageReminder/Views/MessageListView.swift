@@ -91,6 +91,7 @@ struct MessageListView: View {
             composePendingMessage()
 
             await StartupPermissions.requestAll()
+            await refreshBirthdays()
             let schedules = messages.compactMap(\.schedule)
             await NotificationScheduler.syncAll(schedules)
         }
@@ -154,6 +155,29 @@ struct MessageListView: View {
 
         coordinator.pendingMessageID = nil
         composer.compose(message)
+    }
+
+    private func refreshBirthdays() async {
+        var didChange = false
+
+        for message in messages where message.frequency == .birthday {
+            guard !message.contactIdentifier.isEmpty else { continue }
+
+            guard
+                let birthday = await ContactBirthdayStore
+                    .birthday(forContactIdentifier: message.contactIdentifier),
+                let date = birthday.recurringMonthAndDay,
+                message.month != date.month || message.dayOfMonth != date.day
+            else { continue }
+
+            message.month = date.month
+            message.dayOfMonth = date.day
+            didChange = true
+        }
+
+        if didChange {
+            try? modelContext.save()
+        }
     }
 
     private func requestDeletion(of group: MessageGroup) {

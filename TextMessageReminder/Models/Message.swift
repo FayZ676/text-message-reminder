@@ -21,6 +21,8 @@ final class Message {
     /// contact refreshes it.
     var contactImageData: Data?
 
+    var contactIdentifier: String = ""
+
     var frequencyRaw: String
 
     var hour: Int
@@ -46,6 +48,7 @@ final class Message {
         contactName: String = "",
         contactHandle: String = "",
         contactImageData: Data? = nil,
+        contactIdentifier: String = "",
         frequency: Frequency = .weekly,
         hour: Int = 9,
         minute: Int = 0,
@@ -63,6 +66,7 @@ final class Message {
         self.contactName = contactName
         self.contactHandle = contactHandle
         self.contactImageData = contactImageData
+        self.contactIdentifier = contactIdentifier
         self.frequencyRaw = frequency.rawValue
         self.hour = hour
         self.minute = minute
@@ -82,7 +86,25 @@ final class Message {
     var notificationIdentifier: String { identifier.uuidString }
 
     var frequencySummary: String {
-        frequency.summary(hour: hour, minute: minute, weekday: weekday, dayOfMonth: dayOfMonth, month: month)
+        if frequency == .birthday, let possessive = contactPossessive {
+            return "\(possessive) birthday at \(Frequency.timeString(hour: hour, minute: minute))"
+        }
+
+        return frequency.summary(hour: hour, minute: minute, weekday: weekday, dayOfMonth: dayOfMonth, month: month)
+    }
+
+    var contactFirstName: String? {
+        let first = contactName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+            .first
+            .map(String.init)
+
+        return first?.isEmpty == false ? first : nil
+    }
+
+    var contactPossessive: String? {
+        contactFirstName.map { "\($0)'s" }
     }
 
     var triggerComponents: DateComponents {
