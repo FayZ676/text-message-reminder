@@ -19,10 +19,6 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    static func options(hasContact: Bool) -> [Frequency] {
-        hasContact ? allCases : allCases.filter { $0 != .birthday }
-    }
-
     func dateComponents(hour: Int, minute: Int, weekday: Int, dayOfMonth: Int, month: Int) -> DateComponents {
         var components = DateComponents()
         components.hour = hour

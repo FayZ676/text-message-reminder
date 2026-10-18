@@ -253,7 +253,7 @@ struct MessageEditorView: View {
     private var scheduleSection: some View {
         Section {
             Picker("Repeats", selection: $frequency) {
-                ForEach(Frequency.options(hasContact: hasContact)) { option in
+                ForEach(Frequency.allCases) { option in
                     Text(option.displayName).tag(option)
                 }
             }
@@ -287,7 +287,9 @@ struct MessageEditorView: View {
                     }
                 }
             case .birthday:
-                if resolvedBirthday == nil {
+                // Whose birthday isn't known until a contact is chosen; the
+                // footer asks for one instead.
+                if hasContact && resolvedBirthday == nil {
                     if knowsBirthYear {
                         DatePicker(
                             "Birthday",
@@ -343,6 +345,10 @@ struct MessageEditorView: View {
 
     private var scheduleNote: String? {
         guard frequency == .birthday else { return dayCapNote }
+
+        guard hasContact else {
+            return "Choose a contact above, and this sends on their birthday every year."
+        }
 
         let name = firstName ?? "This contact"
 
