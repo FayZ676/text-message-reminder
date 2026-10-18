@@ -18,10 +18,9 @@ struct ContactPickerView: UIViewControllerRepresentable {
         let picker = CNContactPickerViewController()
         picker.delegate = context.coordinator
 
+        // Every contact stays pickable, including friends reached only through
+        // other apps; a contact without a number or email still gets reminders.
         picker.displayedPropertyKeys = [CNContactPhoneNumbersKey, CNContactEmailAddressesKey]
-        picker.predicateForEnablingContact = NSPredicate(
-            format: "phoneNumbers.@count > 0 OR emailAddresses.@count > 0"
-        )
 
         return picker
     }
@@ -77,7 +76,6 @@ struct ContactPickerView: UIViewControllerRepresentable {
                 ?? contact.emailAddresses.first?.value as String?
                 ?? ""
 
-            guard !handle.isEmpty else { return }
             complete(with: ContactSelection(
                 name: name,
                 handle: handle,

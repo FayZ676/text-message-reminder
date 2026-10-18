@@ -1,6 +1,9 @@
 import Foundation
 import SwiftData
 
+/// What the app calls a list. The class keeps its original name because
+/// SwiftData stores it under that name, and renaming it would orphan every
+/// list already saved on a device.
 @Model
 final class MessageGroup {
     var identifier: UUID
@@ -35,19 +38,15 @@ final class MessageGroup {
         set { colorRaw = newValue.rawValue }
     }
 
-    var sortedMessages: [Message] {
-        messages.sorted { $0.createdAt > $1.createdAt }
-    }
-
     var deletionNote: String {
         messages.count == 1
-            ? "This group has 1 message."
-            : "This group has \(messages.count) messages."
+            ? "This list has 1 message."
+            : "This list has \(messages.count) messages."
     }
 
     func delete(includingMessages: Bool, in context: ModelContext) {
         if includingMessages {
-            for message in sortedMessages {
+            for message in messages {
                 NotificationScheduler.cancel(identifier: message.notificationIdentifier)
                 context.delete(message)
             }

@@ -1,52 +1,26 @@
 import Foundation
+import UIKit
+
+struct ComposeNotice: Equatable {
+    let title: String
+    let message: String
+}
 
 @MainActor
 final class MessageComposer: ObservableObject {
 
-    @Published var generatingID: UUID?
+    @Published var notice: ComposeNotice?
 
-    @Published var failure: String?
-
+    /// Opens Messages with the draft. A contact with no phone number or email
+    /// can't be addressed there — they're reached in some other app — so the
+    /// text goes to the clipboard instead, ready to paste wherever that is.
     func compose(_ message: Message) {
-        guard message.usesVariations else {
-            openMessages(for: message, body: message.text)
-            return
-        }
+        if MessagesLink.open(for: message) { return }
 
-        guard generatingID == nil else { return }
-
-        let request = VariationRequest(
-            baseMessage: message.text,
-            contactName: message.contactName,
-            title: message.effectiveTitle
+        UIPasteboard.general.string = message.text
+        notice = ComposeNotice(
+            title: "Message copied",
+            message: "\(message.contactName.isEmpty ? "This contact" : message.contactName) has no phone number or email, so paste it into whichever app you chat in."
         )
-
-        generatingID = message.identifier
-
-        Task {
-            var body = message.text
-            var reason: String?
-
-            do {
-                body = try await MessageVariationService.variation(for: request)
-            } catch MessageVariationError.missingAPIKey {
-                reason = "Add your Anthropic API key in Settings to vary this message. Sending it as written for now."
-            } catch MessageVariationError.requestFailed(let detail) {
-                reason = "Couldn't rewrite this message, so it's going out as written.\n\n\(detail)"
-            } catch {
-                reason = "Couldn't rewrite this message, so it's going out as written."
-            }
-
-            generatingID = nil
-            openMessages(for: message, body: body)
-
-            if failure == nil { failure = reason }
-        }
-    }
-
-    private func openMessages(for message: Message, body: String) {
-        if !MessagesLink.open(for: message, body: body) {
-            failure = "\"\(message.effectiveTitle)\" doesn't have a usable phone number or email yet."
-        }
     }
 }

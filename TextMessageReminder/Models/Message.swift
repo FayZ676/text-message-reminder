@@ -9,8 +9,6 @@ final class Message {
 
     var text: String
 
-    var usesVariations: Bool
-
     var contactName: String
 
     var contactHandle: String
@@ -44,7 +42,6 @@ final class Message {
         identifier: UUID = UUID(),
         title: String = "",
         text: String = "",
-        usesVariations: Bool = false,
         contactName: String = "",
         contactHandle: String = "",
         contactImageData: Data? = nil,
@@ -62,7 +59,6 @@ final class Message {
         self.identifier = identifier
         self.title = title
         self.text = text
-        self.usesVariations = usesVariations
         self.contactName = contactName
         self.contactHandle = contactHandle
         self.contactImageData = contactImageData
@@ -85,35 +81,39 @@ final class Message {
 
     var notificationIdentifier: String { identifier.uuidString }
 
-    var frequencySummary: String {
-        if frequency == .birthday, let possessive = contactPossessive {
-            return "\(possessive) birthday at \(Frequency.timeString(hour: hour, minute: minute))"
+    /// When this message next comes due. Matching is strict so a day a month
+    /// lacks (a Feb 29 birthday) is skipped, just as the notification trigger
+    /// skips it.
+    func nextFireDate(after date: Date) -> Date? {
+        Calendar.current.nextDate(after: date, matching: triggerComponents, matchingPolicy: .strict)
+    }
+
+    func nextFireSummary(after now: Date) -> String {
+        guard let next = nextFireDate(after: now) else { return "Not scheduled" }
+
+        var style = Date.FormatStyle()
+            .weekday(.abbreviated).month(.abbreviated).day()
+            .hour().minute()
+        if !Calendar.current.isDate(next, equalTo: now, toGranularity: .year) {
+            style = style.year()
         }
 
-        return frequency.summary(hour: hour, minute: minute, weekday: weekday, dayOfMonth: dayOfMonth, month: month)
-    }
-
-    var contactFirstName: String? {
-        let first = contactName
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .split(separator: " ")
-            .first
-            .map(String.init)
-
-        return first?.isEmpty == false ? first : nil
-    }
-
-    var contactPossessive: String? {
-        contactFirstName.map { "\($0)'s" }
+        return next.formatted(style)
     }
 
     var triggerComponents: DateComponents {
         frequency.dateComponents(hour: hour, minute: minute, weekday: weekday, dayOfMonth: dayOfMonth, month: month)
     }
 
-    var isComplete: Bool {
+    /// A contact without a phone number or email still counts: the reminder is
+    /// worth having even when the conversation happens in another app.
+    var hasContact: Bool {
         !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !contactIdentifier.isEmpty
+    }
+
+    var isComplete: Bool {
+        hasContact && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var schedule: MessageSchedule? {

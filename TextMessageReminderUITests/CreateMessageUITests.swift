@@ -27,7 +27,7 @@ final class CreateMessageUITests: XCTestCase {
         let app = launchApp()
         let message = "Hey David, checking in!"
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
 
         let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")
@@ -95,7 +95,7 @@ final class CreateMessageUITests: XCTestCase {
     func testEditorExplainsWhySaveIsDisabled() {
         let app = launchApp()
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Message"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(
@@ -106,7 +106,7 @@ final class CreateMessageUITests: XCTestCase {
     }
 
     private func add(to app: XCUIApplication, contact: String, message: String) {
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
 
         let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor should open.")

@@ -43,33 +43,6 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
         return components
     }
 
-    func summary(hour: Int, minute: Int, weekday: Int, dayOfMonth: Int, month: Int) -> String {
-        let time = Self.timeString(hour: hour, minute: minute)
-
-        switch self {
-        case .daily:
-            return "Every day at \(time)"
-        case .weekly:
-            return "Every \(Self.weekdayName(weekday)) at \(time)"
-        case .monthly:
-            return "On the \(Self.ordinal(dayOfMonth)) at \(time)"
-        case .yearly, .birthday:
-            return "Every \(Self.monthName(month)) \(Self.ordinal(dayOfMonth)) at \(time)"
-        }
-    }
-
-    static func timeString(hour: Int, minute: Int) -> String {
-        var components = DateComponents()
-        components.hour = hour
-        components.minute = minute
-
-        guard let date = Calendar.current.date(from: components) else {
-            return String(format: "%02d:%02d", hour, minute)
-        }
-
-        return date.formatted(date: .omitted, time: .shortened)
-    }
-
     static func weekdayName(_ weekday: Int) -> String {
         let symbols = Calendar.current.weekdaySymbols
         let index = weekday - 1

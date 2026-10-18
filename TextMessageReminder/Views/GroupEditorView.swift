@@ -44,7 +44,7 @@ struct GroupEditorView: View {
                             diameter: Layout.groupGlyphPreviewDiameter
                         )
 
-                        TextField("Group name", text: $name)
+                        TextField("List name", text: $name)
                             .multilineTextAlignment(.center)
                             .font(.title3)
                     }
@@ -74,11 +74,11 @@ struct GroupEditorView: View {
                     Section {
                         EmptyView()
                     } footer: {
-                        Label("Name this group to save it.", systemImage: "exclamationmark.circle")
+                        Label("Name this list to save it.", systemImage: "exclamationmark.circle")
                     }
                 }
             }
-            .navigationTitle(existing == nil ? "New Group" : "Edit Group")
+            .navigationTitle(existing == nil ? "New List" : "Edit List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -89,7 +89,7 @@ struct GroupEditorView: View {
                         .disabled(!canSave)
                 }
             }
-            .alert("Couldn't save this group", isPresented: Binding(
+            .alert("Couldn't save this list", isPresented: Binding(
                 get: { saveFailure != nil },
                 set: { if !$0 { saveFailure = nil } }
             )) {

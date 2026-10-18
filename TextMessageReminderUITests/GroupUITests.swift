@@ -75,10 +75,10 @@ final class GroupUITests: XCTestCase {
         addMessage(to: app, message: message)
         XCTAssertTrue(app.staticTexts[message].waitForExistence(timeout: 5))
 
-        app.buttons["Group Options"].firstMatch.tap()
-        app.buttons["Delete Group"].firstMatch.tap()
+        app.buttons["List Options"].firstMatch.tap()
+        app.buttons["Delete List"].firstMatch.tap()
 
-        let deleteGroupOnly = app.buttons["Delete Group Only"]
+        let deleteGroupOnly = app.buttons["Delete List Only"]
         XCTAssertTrue(
             deleteGroupOnly.waitForExistence(timeout: 5),
             "Deleting a group with messages in it should ask what to do with them."
@@ -105,11 +105,11 @@ final class GroupUITests: XCTestCase {
         app.buttons["Add"].firstMatch.tap()
 
         XCTAssertTrue(
-            app.buttons["Add Message"].waitForExistence(timeout: 5),
+            app.buttons["Schedule Message"].waitForExistence(timeout: 5),
             "The plus menu should offer to add a message."
         )
 
-        let addGroup = app.buttons["Add Group"]
+        let addGroup = app.buttons["Add List"]
         XCTAssertTrue(
             addGroup.waitForExistence(timeout: 5),
             "The plus menu should offer to add a group."
@@ -117,7 +117,7 @@ final class GroupUITests: XCTestCase {
         addGroup.tap()
 
         XCTAssertTrue(
-            app.navigationBars["New Group"].waitForExistence(timeout: 5),
+            app.navigationBars["New List"].waitForExistence(timeout: 5),
             "Choosing Add Group should open the group editor."
         )
     }
@@ -125,13 +125,13 @@ final class GroupUITests: XCTestCase {
     func testMessageEditorCanCreateAndAssignAGroup() {
         let app = launchApp()
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
         XCTAssertTrue(
             app.navigationBars["New Message"].waitForExistence(timeout: 5),
             "The message editor should open."
         )
 
-        let newGroup = app.buttons["New Group"]
+        let newGroup = app.buttons["New List"]
         XCTAssertTrue(
             newGroup.waitForExistence(timeout: 5),
             "The editor should offer to make a group even before any exist."
@@ -151,15 +151,15 @@ final class GroupUITests: XCTestCase {
     }
 
     private func addGroup(to app: XCUIApplication) {
-        app.buttons["Add Group"].firstMatch.tap()
+        app.buttons["Add List"].firstMatch.tap()
         nameAndSaveGroup(in: app)
     }
 
     private func nameAndSaveGroup(in app: XCUIApplication) {
-        let editor = app.navigationBars["New Group"]
+        let editor = app.navigationBars["New List"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The group editor should open.")
 
-        let nameField = app.textFields["Group name"]
+        let nameField = app.textFields["List name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5), "The name field should exist.")
         nameField.tap()
         nameField.typeText(groupName)
@@ -169,7 +169,7 @@ final class GroupUITests: XCTestCase {
     }
 
     private func addMessage(to app: XCUIApplication, message: String) {
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
 
         let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The message editor should open.")

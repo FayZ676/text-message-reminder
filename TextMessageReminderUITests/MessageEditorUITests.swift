@@ -35,7 +35,7 @@ final class MessageEditorUITests: XCTestCase {
     func testEditorStaysOpenAfterDismissingContactPicker() {
         let app = launchApp()
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
 
         let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")
@@ -59,7 +59,7 @@ final class MessageEditorUITests: XCTestCase {
     func testContactPickerCanBeReopenedAfterCancelling() {
         let app = launchApp()
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Message"].waitForExistence(timeout: 5))
 
         for attempt in 1...2 {
@@ -82,7 +82,7 @@ final class MessageEditorUITests: XCTestCase {
     func testSaveIsDisabledWithoutContactAndMessage() {
         let app = launchApp()
 
-        app.buttons["Add Message"].firstMatch.tap()
+        app.buttons["Schedule Message"].firstMatch.tap()
 
         let editor = app.navigationBars["New Message"]
         XCTAssertTrue(editor.waitForExistence(timeout: 5), "The editor form should open.")

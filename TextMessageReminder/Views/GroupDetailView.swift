@@ -28,7 +28,7 @@ struct GroupDetailView: View {
                 Button {
                     isAddingMessage = true
                 } label: {
-                    Label("Add Message", systemImage: "plus")
+                    Label("Schedule Message", systemImage: "plus")
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -36,15 +36,15 @@ struct GroupDetailView: View {
                     Button {
                         isEditingGroup = true
                     } label: {
-                        Label("Edit Group", systemImage: "pencil")
+                        Label("Edit List", systemImage: "pencil")
                     }
                     Button(role: .destructive) {
                         requestDeletion()
                     } label: {
-                        Label("Delete Group", systemImage: "trash")
+                        Label("Delete List", systemImage: "trash")
                     }
                 } label: {
-                    Label("Group Options", systemImage: "ellipsis.circle")
+                    Label("List Options", systemImage: "ellipsis.circle")
                 }
             }
         }
@@ -61,8 +61,10 @@ struct GroupDetailView: View {
     }
 
     private var list: some View {
-        List {
-            MessageRows(messages: group.sortedMessages, editing: $editingMessage)
+        TimelineView(.everyMinute) { context in
+            List {
+                MessageRows(messages: group.messages, now: context.date, editing: $editingMessage)
+            }
         }
     }
 
@@ -70,9 +72,9 @@ struct GroupDetailView: View {
         ContentUnavailableView {
             Label(group.name, systemImage: group.symbolName)
         } description: {
-            Text("Nothing in this group yet. Messages you add here stay together and behave exactly like any other.")
+            Text("Nothing in this list yet. Messages you add here stay together and behave exactly like any other.")
         } actions: {
-            Button("Add Message") { isAddingMessage = true }
+            Button("Schedule Message") { isAddingMessage = true }
                 .buttonStyle(.borderedProminent)
         }
     }

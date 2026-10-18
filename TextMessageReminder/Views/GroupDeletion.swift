@@ -28,10 +28,10 @@ private struct GroupDeletionConfirmation: ViewModifier {
             titleVisibility: .visible,
             presenting: group
         ) { target in
-            Button("Delete Group and Messages", role: .destructive) {
+            Button("Delete List and Messages", role: .destructive) {
                 delete(target, includingMessages: true)
             }
-            Button("Delete Group Only") {
+            Button("Delete List Only") {
                 delete(target, includingMessages: false)
             }
             Button("Cancel", role: .cancel) { group = nil }

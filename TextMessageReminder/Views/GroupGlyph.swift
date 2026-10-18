@@ -11,8 +11,12 @@ struct GroupGlyph: View {
         ZStack {
             Circle().fill(color.color)
 
+            // Sized as an image, not a font: a font-sized symbol is laid out in
+            // a text line box, whose baseline space pushes it off center.
             Image(systemName: symbolName)
-                .font(.system(size: diameter * 0.5))
+                .resizable()
+                .scaledToFit()
+                .frame(width: diameter * 0.5, height: diameter * 0.5)
                 .foregroundStyle(.white)
         }
         .frame(width: diameter, height: diameter)

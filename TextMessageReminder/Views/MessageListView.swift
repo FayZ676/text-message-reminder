@@ -5,6 +5,7 @@ struct MessageListView: View {
 
     @EnvironmentObject private var coordinator: NotificationCoordinator
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @StateObject private var composer = MessageComposer()
 
@@ -14,7 +15,6 @@ struct MessageListView: View {
     @State private var isAddingMessage = false
     @State private var isAddingGroup = false
     @State private var editingMessage: Message?
-    @State private var isShowingSettings = false
     @State private var groupPendingDeletion: MessageGroup?
 
     private var ungrouped: [Message] {
@@ -36,25 +36,18 @@ struct MessageListView: View {
                 GroupDetailView(group: group)
             }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        isShowingSettings = true
-                    } label: {
-                        Label("Settings", systemImage: "gearshape")
-                    }
-                }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button {
                             isAddingMessage = true
                         } label: {
-                            Label("Add Message", systemImage: "plus.message")
+                            Label("Schedule Message", systemImage: "plus.message")
                         }
 
                         Button {
                             isAddingGroup = true
                         } label: {
-                            Label("Add Group", systemImage: "folder.badge.plus")
+                            Label("Add List", systemImage: "text.badge.plus")
                         }
                     } label: {
                         Label("Add", systemImage: "plus")
@@ -67,20 +60,17 @@ struct MessageListView: View {
             .sheet(isPresented: $isAddingGroup) {
                 GroupEditorView()
             }
-            .sheet(isPresented: $isShowingSettings) {
-                SettingsView()
-            }
             .sheet(item: $editingMessage) { message in
                 MessageEditorView(existing: message)
             }
             .groupDeletionConfirmation($groupPendingDeletion)
-            .alert("Couldn't open Messages", isPresented: Binding(
-                get: { composer.failure != nil },
-                set: { if !$0 { composer.failure = nil } }
+            .alert(composer.notice?.title ?? "", isPresented: Binding(
+                get: { composer.notice != nil },
+                set: { if !$0 { composer.notice = nil } }
             )) {
-                Button("OK") { composer.failure = nil }
+                Button("OK") { composer.notice = nil }
             } message: {
-                Text(composer.failure ?? "")
+                Text(composer.notice?.message ?? "")
             }
         }
         .environmentObject(composer)
@@ -103,6 +93,12 @@ struct MessageListView: View {
         .onChange(of: messages.count) { _, _ in
             composePendingMessage()
         }
+        // A tap on the lock screen arrives while the app is still inactive,
+        // behind Face ID, and iOS drops a URL opened from there. Becoming active
+        // is when Messages can actually be opened.
+        .onChange(of: scenePhase) { _, _ in
+            composePendingMessage()
+        }
     }
 
     private var emptyState: some View {
@@ -111,44 +107,53 @@ struct MessageListView: View {
         } description: {
             Text("Add a message, a contact, and how often you want to send it. We'll nudge you and open Messages with it ready to go.")
         } actions: {
-            Button("Add Message") { isAddingMessage = true }
+            Button("Schedule Message") { isAddingMessage = true }
                 .buttonStyle(.borderedProminent)
-            Button("Add Group") { isAddingGroup = true }
+            Button("Add List") { isAddingGroup = true }
         }
     }
 
     private var list: some View {
-        List {
-            if !groups.isEmpty {
-                Section("Groups") {
-                    ForEach(groups) { group in
-                        NavigationLink(value: group) {
-                            GroupRow(group: group)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                requestDeletion(of: group)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
+        TimelineView(.everyMinute) { context in
+            List {
+                groupsSection
+
+                if !ungrouped.isEmpty {
+                    Section("Messages") {
+                        MessageRows(messages: ungrouped, now: context.date, editing: $editingMessage)
                     }
                 }
             }
+        }
+    }
 
-            if !ungrouped.isEmpty {
-                Section("Messages") {
-                    MessageRows(messages: ungrouped, editing: $editingMessage)
+    @ViewBuilder
+    private var groupsSection: some View {
+        if !groups.isEmpty {
+            Section("Lists") {
+                ForEach(groups) { group in
+                    NavigationLink(value: group) {
+                        GroupRow(group: group)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            requestDeletion(of: group)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
             }
         }
     }
 
     /// Turns a tapped notification into an open Messages thread. The tap is only
-    /// cleared once it has been matched to a message, so one that arrives ahead
-    /// of the store loading is still honoured on the next pass.
+    /// cleared once it has been matched to a message and the app is active, so
+    /// one that arrives ahead of the store loading or the phone unlocking is
+    /// still honoured on the next pass.
     private func composePendingMessage() {
         guard
+            scenePhase == .active,
             let id = coordinator.pendingMessageID,
             let message = messages.first(where: { $0.identifier == id })
         else { return }

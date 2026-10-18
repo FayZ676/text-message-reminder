@@ -2,22 +2,8 @@ import SwiftUI
 
 struct MessageRow: View {
     let message: Message
-    let isGenerating: Bool
+    let now: Date
     let onCompose: () -> Void
-
-    private var summary: String {
-        var parts: [String] = []
-
-        if !message.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parts.append(message.contactName.isEmpty ? message.contactHandle : message.contactName)
-        }
-
-        parts.append(message.frequencySummary)
-
-        if !message.isEnabled { parts.append("Paused") }
-
-        return parts.joined(separator: " · ")
-    }
 
     var body: some View {
         HStack(alignment: .center, spacing: Layout.regular) {
@@ -58,7 +44,7 @@ struct MessageRow: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            Text(summary)
+            Text(message.nextFireSummary(after: now))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -75,20 +61,13 @@ struct MessageRow: View {
 
     private var composeButton: some View {
         Button(action: onCompose) {
-            Group {
-                if isGenerating {
-                    ProgressView().controlSize(.mini)
-                } else {
-                    Image(systemName: "paperplane.circle.fill")
-                        .font(.headline)
-                        .imageScale(.large)
-                }
-            }
-            .frame(width: Layout.iconButtonGlyph)
+            Image(systemName: "paperplane.circle.fill")
+                .font(.headline)
+                .imageScale(.large)
+                .frame(width: Layout.iconButtonGlyph)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
-        .disabled(isGenerating)
-        .accessibilityLabel(isGenerating ? "Writing message" : "Compose")
+        .accessibilityLabel("Compose")
     }
 }

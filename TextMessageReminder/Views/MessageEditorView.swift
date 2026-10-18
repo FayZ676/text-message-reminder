@@ -12,7 +12,6 @@ struct MessageEditorView: View {
 
     @State private var title: String
     @State private var text: String
-    @State private var usesVariations: Bool
     @State private var contactName: String
     @State private var contactHandle: String
     @State private var contactImageData: Data?
@@ -46,7 +45,6 @@ struct MessageEditorView: View {
         _groupID = State(initialValue: (existing?.group ?? group)?.identifier)
         _title = State(initialValue: message?.title ?? "")
         _text = State(initialValue: message?.text ?? "")
-        _usesVariations = State(initialValue: message?.usesVariations ?? false)
         _contactName = State(initialValue: message?.contactName ?? "")
         _contactHandle = State(initialValue: message?.contactHandle ?? "")
         _contactImageData = State(initialValue: message?.contactImageData)
@@ -109,13 +107,17 @@ struct MessageEditorView: View {
                                 imageData: contactImageData
                             )
 
-                            if contactHandle.isEmpty {
+                            if !hasContact {
                                 Text("Choose a contact")
                             } else {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(contactName.isEmpty ? contactHandle : contactName)
                                         .foregroundStyle(.primary)
-                                    if !contactName.isEmpty {
+                                    if contactHandle.isEmpty {
+                                        Text("No phone or email — you'll get the reminder, and Compose copies the message")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    } else if !contactName.isEmpty {
                                         Text(contactHandle)
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
@@ -148,14 +150,8 @@ struct MessageEditorView: View {
                             bottom: Layout.snug,
                             trailing: Layout.gutter - Layout.textEditorTextInset
                         ))
-
-                    Toggle("Vary this message", isOn: $usesVariations)
                 } header: {
                     Text("Message")
-                } footer: {
-                    if usesVariations {
-                        Text("Claude rewrites this into fresh wording each time you compose, so a recurring message doesn't read the same every week. Needs an API key in Settings. The notification itself still shows the text as written.")
-                    }
                 }
 
                 Section("Message title") {
@@ -164,7 +160,7 @@ struct MessageEditorView: View {
 
                 Section {
                     if !groups.isEmpty {
-                        Picker("Group", selection: $groupID) {
+                        Picker("List", selection: $groupID) {
                             Text("None").tag(UUID?.none)
 
                             ForEach(groups) { group in
@@ -181,13 +177,13 @@ struct MessageEditorView: View {
                     Button {
                         isAddingGroup = true
                     } label: {
-                        Label("New Group", systemImage: "plus.circle.fill")
+                        Label("New List", systemImage: "plus.circle.fill")
                     }
                 } header: {
-                    Text("Group")
+                    Text("List")
                 } footer: {
                     if groups.isEmpty {
-                        Text("Groups keep related messages together — birthdays, friends and family, work. A message doesn't need one.")
+                        Text("Lists keep related messages together — birthdays, friends and family, work. A message doesn't need one.")
                     }
                 }
 
@@ -328,6 +324,7 @@ struct MessageEditorView: View {
 
     private var hasContact: Bool {
         !contactHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !contactIdentifier.isEmpty
     }
 
     private var firstName: String? {
@@ -456,7 +453,6 @@ struct MessageEditorView: View {
 
         message.title = title
         message.text = text
-        message.usesVariations = usesVariations
         message.contactName = contactName
         message.contactHandle = contactHandle
         message.contactImageData = contactImageData

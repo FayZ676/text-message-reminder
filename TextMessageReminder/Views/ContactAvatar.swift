@@ -35,7 +35,9 @@ struct ContactAvatar: View {
                     .font(.system(size: diameter * 0.4, weight: .semibold))
             } else {
                 Image(systemName: "person.fill")
-                    .font(.system(size: diameter * 0.45))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: diameter * 0.45, height: diameter * 0.45)
             }
         }
         .foregroundStyle(Color.accentColor)
