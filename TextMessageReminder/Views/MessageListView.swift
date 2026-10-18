@@ -64,15 +64,16 @@ struct MessageListView: View {
                 MessageEditorView(existing: message)
             }
             .groupDeletionConfirmation($groupPendingDeletion)
-            .alert(composer.notice?.title ?? "", isPresented: Binding(
-                get: { composer.notice != nil },
-                set: { if !$0 { composer.notice = nil } }
-            )) {
-                Button("OK") { composer.notice = nil }
-            } message: {
-                Text(composer.notice?.message ?? "")
+        }
+        // On the stack itself, not its root, so it also covers a pushed list.
+        .overlay(alignment: .bottom) {
+            if let toast = composer.toast {
+                Toast(text: toast)
+                    .padding(.bottom, Layout.gutter)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.snappy, value: composer.toast)
         .environmentObject(composer)
         .task {
             // A cold launch from a notification resolves the tap before this
@@ -193,6 +194,21 @@ struct MessageListView: View {
 
         group.delete(includingMessages: false, in: modelContext)
         try? modelContext.save()
+    }
+}
+
+private struct Toast: View {
+    let text: String
+
+    var body: some View {
+        Label(text, systemImage: "checkmark.circle.fill")
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, Layout.gutter)
+            .padding(.vertical, Layout.regular)
+            .background(.regularMaterial, in: .capsule)
+            .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+            .padding(.horizontal, Layout.gutter)
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 

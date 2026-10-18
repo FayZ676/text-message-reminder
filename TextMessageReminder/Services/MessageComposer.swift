@@ -1,15 +1,13 @@
 import Foundation
 import UIKit
 
-struct ComposeNotice: Equatable {
-    let title: String
-    let message: String
-}
-
 @MainActor
 final class MessageComposer: ObservableObject {
 
-    @Published var notice: ComposeNotice?
+    /// A short confirmation shown over whichever screen is up, then cleared.
+    @Published private(set) var toast: String?
+
+    private var toastDismissal: Task<Void, Never>?
 
     /// Opens Messages with the draft. A contact with no phone number or email
     /// can't be addressed there — they're reached in some other app — so the
@@ -18,9 +16,18 @@ final class MessageComposer: ObservableObject {
         if MessagesLink.open(for: message) { return }
 
         UIPasteboard.general.string = message.text
-        notice = ComposeNotice(
-            title: "Message copied",
-            message: "\(message.contactName.isEmpty ? "This contact" : message.contactName) has no phone number or email, so paste it into whichever app you chat in."
-        )
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        show("Message copied — paste it wherever you chat")
+    }
+
+    private func show(_ text: String) {
+        toast = text
+
+        toastDismissal?.cancel()
+        toastDismissal = Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            guard !Task.isCancelled else { return }
+            toast = nil
+        }
     }
 }

@@ -59,15 +59,21 @@ struct MessageRow: View {
             .accessibilityHidden(true)
     }
 
+    /// No phone number or email means there's nothing for Messages to open, so
+    /// the button copies instead — and says so with its glyph.
+    private var copiesInstead: Bool {
+        MessagesLink.composeURL(for: message) == nil
+    }
+
     private var composeButton: some View {
         Button(action: onCompose) {
-            Image(systemName: "paperplane.circle.fill")
+            Image(systemName: copiesInstead ? "doc.on.doc.fill" : "paperplane.circle.fill")
                 .font(.headline)
                 .imageScale(.large)
                 .frame(width: Layout.iconButtonGlyph)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
-        .accessibilityLabel("Compose")
+        .accessibilityLabel(copiesInstead ? "Copy message" : "Compose")
     }
 }
