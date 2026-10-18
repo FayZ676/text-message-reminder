@@ -67,10 +67,23 @@ struct MessageRow: View {
 
     private var composeButton: some View {
         Button(action: onCompose) {
-            Image(systemName: copiesInstead ? "doc.on.doc.fill" : "paperplane.circle.fill")
-                .font(.headline)
-                .imageScale(.large)
-                .frame(width: Layout.iconButtonGlyph)
+            Group {
+                if copiesInstead {
+                    // There's no circled copy symbol, so it's built from the same
+                    // `circle.fill` the paper plane sits in, keeping both the same size.
+                    Image(systemName: "circle.fill")
+                        .overlay {
+                            Image(systemName: "doc.on.doc.fill")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.white)
+                        }
+                } else {
+                    Image(systemName: "paperplane.circle.fill")
+                }
+            }
+            .font(.headline)
+            .imageScale(.large)
+            .frame(width: Layout.iconButtonGlyph)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
