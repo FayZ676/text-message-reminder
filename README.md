@@ -88,6 +88,14 @@ TEST_RUNNER_SCREENSHOT_DIR="$PWD/AppStore/Screenshots" xcodebuild test \
 The Messages handoff isn't in the set: the simulator has no iMessage account, so the recipient
 never resolves and the draft looks broken.
 
+`AppStore/Creative` holds the product page header (3840×1646, 21:9) and search results asset
+(3840×2560, 3:2), which iOS 27 shows in place of screenshots. Both are rendered from the icon and
+the screenshots above, so rerun after either changes:
+
+```bash
+python3 -I AppStore/make_creative_assets.py
+```
+
 ## Verified
 
 Builds clean for simulator and device with no warnings. The create flow is covered by passing
