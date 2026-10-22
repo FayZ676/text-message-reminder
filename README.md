@@ -71,6 +71,11 @@ xcodebuild test -project TextMessageReminder.xcodeproj -scheme TextMessageRemind
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6'
 ```
 
+## Privacy policy
+
+[PRIVACY.md](PRIVACY.md) is the policy the App Store listing links to. Its URL on GitHub is the
+Privacy Policy URL in App Store Connect, so keep it in step with what the app actually does.
+
 ## App Store screenshots
 
 `AppStore/Screenshots` holds the 6.9" iPhone set (1320×2868). `ScreenshotTests` regenerates it
