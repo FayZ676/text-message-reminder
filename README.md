@@ -71,6 +71,23 @@ xcodebuild test -project TextMessageReminder.xcodeproj -scheme TextMessageRemind
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6'
 ```
 
+## App Store screenshots
+
+`AppStore/Screenshots` holds the 6.9" iPhone set (1320×2868). `ScreenshotTests` regenerates it
+from sample data that a DEBUG-only `-screenshots` launch argument seeds into the in-memory store;
+the test skips itself unless it's given a folder to write to:
+
+```bash
+xcrun simctl status_bar 'iPhone 17 Pro Max' override --time 9:41 --batteryState charged --batteryLevel 100
+TEST_RUNNER_SCREENSHOT_DIR="$PWD/AppStore/Screenshots" xcodebuild test \
+  -project TextMessageReminder.xcodeproj -scheme TextMessageReminder \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
+  -only-testing:TextMessageReminderUITests/ScreenshotTests
+```
+
+The Messages handoff isn't in the set: the simulator has no iMessage account, so the recipient
+never resolves and the draft looks broken.
+
 ## Verified
 
 Builds clean for simulator and device with no warnings. The create flow is covered by passing

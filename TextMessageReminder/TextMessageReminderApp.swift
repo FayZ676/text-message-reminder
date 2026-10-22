@@ -17,6 +17,9 @@ struct TextMessageReminderApp: App {
         WindowGroup {
             MessageListView()
                 .environmentObject(coordinator)
+                #if DEBUG
+                .modifier(ScreenshotSeed())
+                #endif
         }
         .modelContainer(for: [Message.self, MessageGroup.self], inMemory: Self.isUITesting)
     }
